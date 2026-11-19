@@ -1,0 +1,417 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#08080c">
+<title>TRADEBOT X</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#08080c;color:white;
+ font-family:-apple-system,BlinkMacSystemFont,Arial;
+ padding:18px 15px 100px;max-width:600px;margin:auto
+}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+h1{font-size:21px;letter-spacing:2px}
+h1 span{color:#ff304f}
+.badge{background:#29121a;color:#ff6078;padding:8px;border-radius:20px;font-size:10px}
+.card{background:#15151e;border:1px solid #30303c;border-radius:17px;padding:16px;margin-bottom:12px}
+.label{font-size:11px;color:#9999a8}
+.balance{font-size:35px;font-weight:800;margin:10px 0}
+.green{color:#35d69b}.red{color:#ff526b}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+button,select{border:0;border-radius:11px;padding:13px;font-weight:bold;font-size:12px}
+button{background:#292934;color:white}
+.primary{background:#ff304f;color:white}
+button:disabled{opacity:.4}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat strong{display:block;font-size:20px;margin-top:7px}
+.title{font-weight:bold;margin:22px 0 12px}
+.asset,.trade{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid #30303c;font-size:13px;gap:8px}
+.asset:last-child,.trade:last-child{border:0}
+small{display:block;color:#9999a8;margin-top:5px}
+select{width:100%;background:#292934;color:white}
+nav{position:fixed;bottom:0;left:0;right:0;background:#111119;border-top:1px solid #333;display:flex;justify-content:space-around;padding:13px 3px calc(13px + env(safe-area-inset-bottom));max-width:600px;margin:auto}
+nav button{background:none;color:#aaa;padding:5px}
+nav button.active{color:#ff526b}
+.page{display:none}.page.active{display:block}
+.notice{background:#26131a;color:#ffc1ca;padding:12px;border-radius:12px;font-size:11px;line-height:1.5;margin-bottom:15px}
+.market-btn{background:#292934;padding:9px;border-radius:10px}
+.yes{background:#145c43;color:#8affc9}
+.no{background:#681d2c;color:#ff9aaa}
+</style>
+</head>
+
+<body>
+<header>
+<h1>TRADEBOT <span>X</span></h1>
+<div class="badge">V2.0 · PAPER MODE</div>
+</header>
+
+<div class="notice">
+EDUCATIONAL SIMULATION ONLY. All prices, prediction-market odds and transactions are generated examples. No real money, live exchange connection or actual Kalshi orders.
+</div>
+
+<section id="home" class="page active">
+<div class="card">
+<div class="label">TOTAL VIRTUAL BALANCE</div>
+<div class="balance" id="balance">$1,000.00</div>
+<div id="profit" class="green">+$0.00 (0.00%)</div>
+<br>
+<div class="label">BOT STATUS: <b id="status">PAUSED</b></div>
+<br>
+<div class="controls">
+<button class="primary" id="start">▶ START BOT</button>
+<button id="pause">Ⅱ PAUSE BOT</button>
+</div>
+</div>
+
+<div class="stats">
+<div class="card stat"><div class="label">OPEN POSITIONS</div><strong id="positions">0</strong></div>
+<div class="card stat"><div class="label">COMPLETED TRADES</div><strong id="trades">0</strong></div>
+<div class="card stat"><div class="label">REALIZED P/L</div><strong id="realized">$0.00</strong></div>
+<div class="card stat"><div class="label">WIN RATE</div><strong id="winrate">—</strong></div>
+</div>
+
+<div class="title">SELECT MARKET</div>
+<div class="card">
+<select id="market">
+<option value="all">All markets</option>
+<option value="crypto">Crypto</option>
+<option value="stocks">Stocks</option>
+<option value="forex">Forex</option>
+<option value="kalshi">Kalshi simulation</option>
+</select>
+</div>
+
+<div class="title">MARKET WATCH</div>
+<div class="card" id="markets"></div>
+</section>
+
+<section id="kalshi" class="page">
+<div class="title">KALSHI SIMULATOR</div>
+<div class="card">
+<div class="label">PREDICTION MARKET DEMONSTRATION</div>
+<h2 style="color:#ff526b">YES / NO MARKETS</h2>
+<p class="label">Practice evaluating fictional event contracts using virtual funds.</p>
+</div>
+<div id="kalshiMarkets"></div>
+<div class="card">
+<div class="label">HOW IT WORKS</div>
+<p style="font-size:12px;line-height:1.6;color:#bbb">
+YES represents a simulated belief that an event will happen.
+NO represents a simulated belief that it will not happen.
+The prices below are generated demonstration probabilities, not actual Kalshi quotes.
+</p>
+</div>
+</section>
+
+<section id="activity" class="page">
+<div class="title">OPEN POSITIONS</div>
+<div class="card" id="openTrades">No open positions.</div>
+<div class="title">TRADE HISTORY</div>
+<div class="card" id="history">No trades yet.</div>
+</section>
+
+<section id="settings" class="page">
+<div class="title">BOT CONFIGURATION</div>
+<div class="card">
+<div class="label">RISK PROFILE</div><br>
+<select id="risk">
+<option value=".05">Conservative — 5%</option>
+<option value=".10">Moderate demo — 10%</option>
+</select>
+<br><br>
+<div class="label">MAXIMUM OPEN POSITIONS</div><br>
+<select id="maxPositions">
+<option value="2">2 positions</option>
+<option value="3">3 positions</option>
+<option value="4">4 positions</option>
+</select>
+<br><br>
+<button class="primary" onclick="resetBot()" style="width:100%">RESET SIMULATION</button>
+</div>
+<div class="card">
+<div class="label">ACCOUNT TYPE</div><b>Paper trading</b><br><br>
+<div class="label">STARTING BALANCE</div><b>$1,000</b><br><br>
+<div class="label">EXTERNAL API CONNECTIONS</div><b>None</b>
+</div>
+</section>
+
+<nav>
+<button class="active" onclick="page('home',this)">⌂<br>Home</button>
+<button onclick="page('kalshi',this)">◈<br>Kalshi</button>
+<button onclick="page('activity',this)">⇄<br>Activity</button>
+<button onclick="page('settings',this)">⚙<br>Settings</button>
+</nav>
+
+<script>
+const STARTING_BALANCE=1000;
+
+const assets=[
+{name:"Bitcoin",code:"BTC/USD",type:"crypto",price:67000},
+{name:"Ethereum",code:"ETH/USD",type:"crypto",price:3500},
+{name:"Apple",code:"AAPL",type:"stocks",price:220},
+{name:"Microsoft",code:"MSFT",type:"stocks",price:425},
+{name:"EUR/USD",code:"EUR/USD",type:"forex",price:1.08},
+{name:"GBP/USD",code:"GBP/USD",type:"forex",price:1.27}
+];
+
+const events=[
+{id:"election",name:"Fictional Event A",yes:0.62},
+{id:"weather",name:"Fictional Event B",yes:0.48},
+{id:"technology",name:"Fictional Event C",yes:0.71}
+];
+
+let cash=1000,realized=0;
+let positions=[],history=[];
+let wins=0,losses=0,running=false,timer=null;
+let prices={},candles={},odds={};
+
+assets.forEach(a=>{
+prices[a.code]=a.price;
+candles[a.code]=[];
+});
+events.forEach(e=>odds[e.id]=e.yes);
+
+const $=id=>document.getElementById(id);
+const money=n=>"$"+n.toLocaleString("en-US",{
+minimumFractionDigits:2,maximumFractionDigits:2
+});
+
+function page(id,button){
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+$(id).classList.add("active");
+document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+button.classList.add("active");
+}
+
+function equity(){
+return cash+positions.reduce((sum,p)=>{
+return sum+p.qty*currentPrice(p);
+},0);
+}
+
+function currentPrice(p){
+return p.type==="kalshi"?
+(p.side==="YES"?odds[p.event]:1-odds[p.event]):
+prices[p.code];
+}
+
+function save(){
+localStorage.setItem("tradebotx-v2",JSON.stringify({
+cash,realized,positions,history,wins,losses,prices,candles,odds
+}));
+}
+
+function render(){
+let total=equity(),pnl=total-STARTING_BALANCE;
+$("balance").textContent=money(total);
+$("profit").textContent=(pnl>=0?"+":"")+money(pnl)+
+" ("+(pnl/10).toFixed(2)+"%)";
+$("profit").className=pnl>=0?"green":"red";
+$("status").textContent=running?"RUNNING":"PAUSED";
+$("positions").textContent=positions.length;
+$("trades").textContent=history.length;
+$("realized").textContent=money(realized);
+$("winrate").textContent=wins+losses?
+Math.round(wins/(wins+losses)*100)+"%":"—";
+
+let selected=$("market").value;
+let visible=assets.filter(a=>selected==="all"||selected===a.type);
+
+if(selected==="kalshi")visible=[];
+
+$("markets").innerHTML=visible.map(a=>`
+<div class="asset">
+<div><b>${a.name}</b><small>${a.code} · ${a.type}</small></div>
+<b>${a.type==="forex"?prices[a.code].toFixed(5):money(prices[a.code])}</b>
+</div>`).join("")||"Choose another market.";
+
+$("kalshiMarkets").innerHTML=events.map(e=>`
+<div class="card">
+<b>${e.name}</b>
+<div class="asset">
+<span>YES probability</span>
+<b>${(odds[e.id]*100).toFixed(1)}¢</b>
+</div>
+<div class="asset">
+<span>NO probability</span>
+<b>${((1-odds[e.id])*100).toFixed(1)}¢</b>
+</div>
+<div class="controls">
+<button class="yes" onclick="manualKalshi('${e.id}','YES')">SIMULATE YES</button>
+<button class="no" onclick="manualKalshi('${e.id}','NO')">SIMULATE NO</button>
+</div>
+</div>`).join("");
+
+$("openTrades").innerHTML=positions.map(p=>`
+<div class="trade">
+<div><b>${p.code||p.event} ${p.side||""}</b>
+<small>Entry: ${money(p.entry)}</small></div>
+<b>${money(p.qty*currentPrice(p))}</b>
+</div>`).join("")||"No open positions.";
+
+$("history").innerHTML=history.slice(0,40).map(t=>`
+<div class="trade">
+<div><b>${t.name} ${t.side}</b>
+<small>${new Date(t.time).toLocaleString()}</small></div>
+<b class="${t.pnl===null?"":t.pnl>=0?"green":"red"}">
+${t.pnl===null?"OPEN":money(t.pnl)}
+</b>
+</div>`).join("")||"No trades yet.";
+
+save();
+}
+
+function openPosition(data){
+if(positions.length>=Number($("maxPositions").value))return;
+let allocation=Math.min(
+cash*Number($("risk").value),50
+);
+if(allocation<2)return;
+
+let entry=data.type==="kalshi"?
+(data.side==="YES"?odds[data.event]:1-odds[data.event]):
+prices[data.code];
+
+let qty=allocation/entry;
+cash-=allocation;
+
+positions.push({...data,entry,qty,allocation});
+
+history.unshift({
+name:data.code||data.event,
+side:"BUY "+(data.side||""),
+pnl:null,time:Date.now()
+});
+}
+
+function manualKalshi(id,side){
+if(positions.length>=Number($("maxPositions").value)){
+alert("Maximum virtual positions reached.");
+return;
+}
+openPosition({type:"kalshi",event:id,side});
+render();
+}
+
+function closePosition(p){
+let value=p.qty*currentPrice(p);
+let pnl=value-p.allocation;
+cash+=value;
+realized+=pnl;
+if(pnl>=0)wins++;else losses++;
+positions=positions.filter(x=>x!==p);
+history.unshift({
+name:p.code||p.event,
+side:"SELL "+(p.side||""),
+pnl,time:Date.now()
+});
+}
+
+function strategy(a){
+let data=candles[a.code];
+if(data.length<10)return;
+
+let fast=data.slice(-3).reduce((x,y)=>x+y,0)/3;
+let slow=data.slice(-10).reduce((x,y)=>x+y,0)/10;
+let p=positions.find(x=>x.code===a.code);
+
+if(!p&&fast>slow*1.001){
+openPosition({type:a.type,code:a.code});
+}
+else if(p&&(
+fast<slow*.999||
+prices[a.code]<=p.entry*.98||
+prices[a.code]>=p.entry*1.03
+)){
+closePosition(p);
+}
+}
+
+function kalshiStrategy(e){
+let p=positions.find(x=>x.event===e.id);
+let probability=odds[e.id];
+if(!p&&probability>.68){
+openPosition({type:"kalshi",event:e.id,side:"YES"});
+}else if(p&&Math.abs(probability-p.entry)>.08){
+closePosition(p);
+}
+}
+
+function tick(){
+assets.forEach(a=>{
+let volatility=a.type==="crypto"?.008:
+a.type==="stocks"?.003:.0008;
+prices[a.code]*=1+(Math.random()-.5)*2*volatility;
+candles[a.code].push(prices[a.code]);
+if(candles[a.code].length>20)candles[a.code].shift();
+
+if($("market").value==="all"||$("market").value===a.type)
+strategy(a);
+});
+
+events.forEach(e=>{
+odds[e.id]=Math.max(.05,Math.min(.95,
+odds[e.id]+(Math.random()-.5)*.025
+));
+if($("market").value==="all"||$("market").value==="kalshi")
+kalshiStrategy(e);
+});
+render();
+}
+
+function startBot(){
+if(running)return;
+running=true;
+timer=setInterval(tick,2000);
+render();
+}
+
+function pauseBot(){
+running=false;
+clearInterval(timer);
+timer=null;
+render();
+}
+
+function resetBot(){
+pauseBot();
+if(!confirm("Reset virtual account?"))return;
+cash=1000;realized=0;
+positions=[];history=[];
+wins=0;losses=0;
+assets.forEach(a=>{
+prices[a.code]=a.price;
+candles[a.code]=[];
+});
+events.forEach(e=>odds[e.id]=e.yes);
+render();
+}
+
+$("start").onclick=startBot;
+$("pause").onclick=pauseBot;
+$("market").onchange=render;
+
+try{
+let saved=JSON.parse(localStorage.getItem("tradebotx-v2"));
+if(saved){
+cash=saved.cash??1000;
+realized=saved.realized??0;
+positions=saved.positions??[];
+history=saved.history??[];
+wins=saved.wins??0;
+losses=saved.losses??0;
+prices={...prices,...saved.prices};
+candles={...candles,...saved.candles};
+odds={...odds,...saved.odds};
+}
+}catch(e){}
+
+render();
+</script>
+</body>
+</html>
